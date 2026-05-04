@@ -10,6 +10,7 @@ import {
   getCredentialOrThrow,
   getVisibleCredentials,
 } from './credentials/credential-service'
+import { getPublicBaseUrl } from './env'
 import { getMintConfigStatus } from './minting/config'
 import { touchDatabase } from './storage/database'
 
@@ -117,16 +118,17 @@ export function createApi() {
     }
   })
 
-  app.get('/api/metadata/collection.json', (c) =>
-    c.json({
+  app.get('/api/metadata/collection.json', (c) => {
+    const baseUrl = getPublicBaseUrl().replace(/\/$/, '')
+    return c.json({
       description:
         'CredentialMint issues devnet MPL Core academic credentials that let learners prove course and certification completion from an allowlisted issuer.',
-      external_url: new URL('/', c.req.url).toString(),
-      image: `${new URL(c.req.url).origin}/api/metadata/collection.svg`,
+      external_url: `${baseUrl}/`,
+      image: `${baseUrl}/api/metadata/collection.svg`,
       name: 'CredentialMint Academic Records',
       symbol: 'CM077',
-    }),
-  )
+    })
+  })
 
   app.get('/api/metadata/collection.svg', (c) => {
     const svg =
@@ -137,6 +139,7 @@ export function createApi() {
   app.get('/api/metadata/:id.json', (c) => {
     try {
       const credential = getCredentialOrThrow(c.req.param('id')!)
+      const baseUrl = getPublicBaseUrl().replace(/\/$/, '')
       return c.json({
         attributes: [
           { trait_type: 'Issuer', value: credential.issuerName },
@@ -147,8 +150,8 @@ export function createApi() {
           ...(credential.grade ? [{ trait_type: 'Grade', value: credential.grade }] : []),
         ],
         description: `${credential.credentialType} issued by ${credential.issuerName} to ${credential.learnerName} for ${credential.courseTitle}.`,
-        external_url: `${new URL(c.req.url).origin}/api/credentials/${credential.id}/verify`,
-        image: `${new URL(c.req.url).origin}/api/metadata/${credential.id}.svg`,
+        external_url: `${baseUrl}/api/credentials/${credential.id}/verify`,
+        image: `${baseUrl}/api/metadata/${credential.id}.svg`,
         name: `${credential.credentialType}: ${credential.courseTitle}`,
       })
     } catch (error) {
