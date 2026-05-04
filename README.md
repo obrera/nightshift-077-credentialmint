@@ -1,51 +1,31 @@
-# nightshift-077-warrantymint
+# CredentialMint
 
-React 19 app with Vite, TypeScript, Tailwind CSS v4, wallet-ui, and Solana Kit.
+Nightshift 077: an academic credential NFT app built from `create-seed` + `bun-react-vite-solana-kit`.
 
-## Features
+Operators sign in with Solana from an allowlisted wallet, approve course/certification records, and learners claim approved records as server-signed MPL Core credential NFTs into the same connected authenticated wallet.
 
-- React 19 with Vite 7
-- Solana wallet playground with Wallet Standard support
-- Solana Devnet, Localnet, and Testnet cluster switching
-- Tailwind CSS v4 and `tw-animate-css`
-- TypeScript with strict checking
-- shadcn/ui primitives powered by Base UI and Lucide icons
-- System-aware light and dark theme support with persisted preference
+## Runtime config
 
-## Development
+- `CREDENTIALMINT_PUBLIC_BASE_URL` - public app URL used for metadata/image links.
+- `CREDENTIALMINT_OPERATOR_WALLETS` - comma-separated issuer/operator wallet allowlist.
+- `CREDENTIALMINT_DEVNET_SIGNER_KEYPAIR` - devnet fee payer/authority keypair path, JSON array, comma list, or `base64:value`.
+- `CREDENTIALMINT_COLLECTION_ADDRESS` - MPL Core collection for credential NFTs.
+- `CREDENTIALMINT_DATA_DIR` - SQLite data directory, defaults to `./data`.
+
+## Scripts
 
 ```bash
-bun install
 bun run dev
-```
-
-Open `http://localhost:5173` to view the app.
-
-## Commands
-
-```bash
+bun run start
 bun run build
-bun run ci
-bun run lint
-bun run lint:fix
-bun run preview
-bun run check-types
+bun run proof
+bun run proof:mint
 ```
 
-## Adding Components
+## Architecture notes
 
-Use the shadcn CLI to scaffold more UI primitives:
-
-```bash
-bunx --bun shadcn@latest add button
-```
-
-Generated components are written to `src/components/ui`.
-
-## Usage
-
-Import components from the `@/components` alias:
-
-```tsx
-import { Button } from '@/components/ui/button'
-```
+- Wallet UI only: `@wallet-ui/react`, `@solana/kit`, no wallet-adapter/web3.js.
+- SIWS is verified on the server before API access.
+- Operator allowlist gates credential creation.
+- Claim path is server-signed MPL Core devnet minting via `@obrera/mpl-core-kit-lib@0.0.2`.
+- `/api/metadata/collection.json`, `/api/metadata/:id.json`, `/api/metadata/:id.svg`, and `/api/credentials/:id/verify` provide public holder proof.

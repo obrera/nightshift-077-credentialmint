@@ -7,29 +7,30 @@ export function AboutFeature() {
         <CardHeader className="gap-2">
           <CardTitle className="text-xl font-semibold tracking-tight">About</CardTitle>
           <CardDescription className="max-w-2xl text-sm/6">
-            Nightshift 077 Warrantymint is a starter for Solana apps that need wallet connection, signing flows, cluster
-            switching, and a polished React UI from day one.
+            CredentialMint turns academic course and certification records into claimable MPL Core credential NFTs.
+            Issuers approve records, learners claim into their authenticated wallet, and holders get public proof links.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
-            <div className="text-sm font-medium">Wallet-ready flows</div>
+            <div className="text-sm font-medium">Issuer + learner flow</div>
             <div className="mt-1 text-xs/relaxed text-muted-foreground">
-              Connect wallets, view balances, and test sign in, sign message, sign transaction, and send transaction
-              flows.
+              Allowlisted operators create credential records; approved learner wallets claim tamper-evident certificate
+              NFTs.
             </div>
           </div>
           <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
-            <div className="text-sm font-medium">Solana client setup</div>
+            <div className="text-sm font-medium">Server-signed MPL Core</div>
             <div className="mt-1 text-xs/relaxed text-muted-foreground">
-              Includes Solana Kit client wiring, explorer links, and cluster-aware state for local development and
-              testing.
+              The live claim path uses Solana Kit and an MPL Core collection with metadata, image, transaction, and
+              asset links.
             </div>
           </div>
           <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
-            <div className="text-sm font-medium">Modern app shell</div>
+            <div className="text-sm font-medium">Holder verification</div>
             <div className="mt-1 text-xs/relaxed text-muted-foreground">
-              Built with Vite, React, TypeScript, Tailwind CSS v4, and reusable UI primitives that are ready to extend.
+              Every claimed credential exposes a public verification endpoint for diploma, certificate, and
+              course-completion checks.
             </div>
           </div>
         </CardContent>

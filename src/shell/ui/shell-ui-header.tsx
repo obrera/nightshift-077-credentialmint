@@ -15,7 +15,7 @@ export function ShellUiHeader({ links }: { links: HeaderLink[] }) {
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-8">
           <Link className="text-xl font-semibold tracking-tight" to="/">
-            Nightshift 077 Warrantymint
+            CredentialMint
           </Link>
           <nav aria-label="Primary" className="flex flex-wrap items-center gap-4">
             {links.map((link) => (

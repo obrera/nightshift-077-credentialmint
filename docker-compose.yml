@@ -1,0 +1,19 @@
+services:
+  credentialmint077:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      CREDENTIALMINT_COLLECTION_ADDRESS: ${CREDENTIALMINT_COLLECTION_ADDRESS}
+      CREDENTIALMINT_DATA_DIR: /app/data
+      CREDENTIALMINT_DEVNET_SIGNER_KEYPAIR: ${CREDENTIALMINT_DEVNET_SIGNER_KEYPAIR}
+      CREDENTIALMINT_OPERATOR_WALLETS: ${CREDENTIALMINT_OPERATOR_WALLETS}
+      CREDENTIALMINT_PUBLIC_BASE_URL: ${CREDENTIALMINT_PUBLIC_BASE_URL}
+      NODE_ENV: production
+      PORT: 3000
+    restart: unless-stopped
+    volumes:
+      - credentialmint077-data:/app/data
+
+volumes:
+  credentialmint077-data:

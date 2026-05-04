@@ -8,14 +8,14 @@ export const appRouter = createBrowserRouter(
   [
     {
       children: [
-        { element: <Navigate replace to="/wallet" />, index: true },
+        { element: <Navigate replace to="/credentials" />, index: true },
         {
           lazy: () => import('@/about/feature/about-feature'),
           path: 'about',
         },
         {
-          lazy: () => import('@/wallet/feature/wallet-feature'),
-          path: 'wallet',
+          lazy: () => import('@/credential/feature/credential-feature'),
+          path: 'credentials',
         },
         {
           lazy: () => import('@/shell/feature/shell-not-found-feature'),
@@ -27,9 +27,9 @@ export const appRouter = createBrowserRouter(
                 to: '/about',
               },
               {
-                description: 'Open the wallet screen if you were looking for connection and signing tools.',
-                title: 'Wallet',
-                to: '/wallet',
+                description: 'Open the credential screen if you were looking for issuance, claims, or verification.',
+                title: 'Credentials',
+                to: '/credentials',
               },
             ],
           }),
@@ -39,7 +39,7 @@ export const appRouter = createBrowserRouter(
       element: (
         <ShellFeature
           links={[
-            { label: 'Wallet', to: '/wallet' },
+            { label: 'Credentials', to: '/credentials' },
             { label: 'About', to: '/about' },
           ]}
         />
