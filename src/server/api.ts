@@ -136,9 +136,16 @@ export function createApi() {
     return c.body(svg, 200, { 'content-type': 'image/svg+xml' })
   })
 
-  app.get('/api/metadata/:id.json', (c) => {
+  app.get('/api/metadata/:file', (c) => {
+    const file = c.req.param('file')!
+    if (file.endsWith('.svg')) {
+      return credentialImageResponse(file.slice(0, -'.svg'.length))
+    }
+    if (!file.endsWith('.json')) {
+      return c.json({ error: 'Unsupported metadata route.' }, 404)
+    }
     try {
-      const credential = getCredentialOrThrow(c.req.param('id')!)
+      const credential = getCredentialOrThrow(file.slice(0, -'.json'.length))
       const baseUrl = getPublicBaseUrl().replace(/\/$/, '')
       return c.json({
         attributes: [
@@ -159,17 +166,17 @@ export function createApi() {
     }
   })
 
-  app.get('/api/metadata/:id.svg', (c) => {
-    const credential = getCredentialOrThrow(c.req.param('id')!)
-    const clean = (value: string) => value.replace(/[<&>]/g, '')
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><rect width="1200" height="630" fill="#111827"/><rect x="52" y="52" width="1096" height="526" rx="32" fill="#f8fafc"/><text x="96" y="132" font-family="Arial" font-size="42" fill="#111827">CredentialMint</text><text x="96" y="214" font-family="Arial" font-size="54" fill="#0369a1">${clean(credential.credentialType)}</text><text x="96" y="292" font-family="Arial" font-size="38" fill="#111827">${clean(credential.courseTitle)}</text><text x="96" y="368" font-family="Arial" font-size="30" fill="#334155">Awarded to ${clean(credential.learnerName)}</text><text x="96" y="430" font-family="Arial" font-size="26" fill="#64748b">${clean(credential.issuerName)} · ${clean(credential.completionDate)}</text><text x="96" y="506" font-family="Arial" font-size="18" fill="#94a3b8">Credential ID ${credential.id}</text></svg>`
-    return c.body(svg, 200, { 'content-type': 'image/svg+xml' })
-  })
-
   app.use('/*', serveStatic({ root: './dist' }))
   app.get('*', serveStatic({ path: './dist/index.html' }))
 
   return app
+}
+
+function credentialImageResponse(id: string) {
+  const credential = getCredentialOrThrow(id)
+  const clean = (value: string) => value.replace(/[<&>]/g, '')
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><rect width="1200" height="630" fill="#111827"/><rect x="52" y="52" width="1096" height="526" rx="32" fill="#f8fafc"/><text x="96" y="132" font-family="Arial" font-size="42" fill="#111827">CredentialMint</text><text x="96" y="214" font-family="Arial" font-size="54" fill="#0369a1">${clean(credential.credentialType)}</text><text x="96" y="292" font-family="Arial" font-size="38" fill="#111827">${clean(credential.courseTitle)}</text><text x="96" y="368" font-family="Arial" font-size="30" fill="#334155">Awarded to ${clean(credential.learnerName)}</text><text x="96" y="430" font-family="Arial" font-size="26" fill="#64748b">${clean(credential.issuerName)} · ${clean(credential.completionDate)}</text><text x="96" y="506" font-family="Arial" font-size="18" fill="#94a3b8">Credential ID ${credential.id}</text></svg>`
+  return new Response(svg, { headers: { 'content-type': 'image/svg+xml' }, status: 200 })
 }
 
 function jsonError(error: unknown) {
