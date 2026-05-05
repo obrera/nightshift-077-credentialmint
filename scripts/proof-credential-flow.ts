@@ -3,6 +3,8 @@ import { mkdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
+import { encodeBase64 } from '../src/shared/byte-encoding'
+
 process.env.CREDENTIALMINT_DATA_DIR = join(tmpdir(), `credentialmint-proof-${Date.now()}`)
 process.env.CREDENTIALMINT_PUBLIC_BASE_URL = 'http://localhost:3999'
 process.env.CREDENTIALMINT_OPERATOR_WALLETS = '11111111111111111111111111111111'
@@ -27,7 +29,7 @@ async function main() {
   }
   try {
     await verifySignInPayload(nonce.input, {
-      signature: Buffer.from(Uint8Array.from({ length: 64 }, (_, index) => index + 1)).toString('base64'),
+      signature: encodeBase64(Uint8Array.from({ length: 64 }, (_, index) => index + 1)),
     })
     throw new Error('Invalid signature was accepted.')
   } catch (error) {

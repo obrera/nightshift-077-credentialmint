@@ -3,6 +3,8 @@ import { type UiWallet, type UiWalletAccount, useSignIn } from '@wallet-ui/react
 import { createContext, type ReactNode, useContext, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
+import { encodeBase64 } from '@/shared/byte-encoding'
+
 import type { CredentialSession } from './credential-types'
 
 import {
@@ -57,8 +59,8 @@ export function CredentialMintProvider({
     mutationFn: async () => {
       const nonce = await createNonce(account.address)
       const output = await signInWithWallet(nonce.input)
-      const signedMessage = output.signedMessage ? Buffer.from(output.signedMessage).toString('base64') : undefined
-      const signature = Buffer.from(output.signature).toString('base64')
+      const signedMessage = output.signedMessage ? encodeBase64(output.signedMessage) : undefined
+      const signature = encodeBase64(output.signature)
       const verified = await verifySignIn({ input: nonce.input, output: { signature, signedMessage } })
       localStorage.setItem('credentialmint.token', verified.token)
       setToken(verified.token)

@@ -1,6 +1,7 @@
 import { createKeyPairSignerFromBytes } from '@solana/kit'
 import { promises as fs } from 'node:fs'
 
+import { decodeBase64 } from '../../shared/byte-encoding'
 import { getEnv, getPublicBaseUrl } from '../env'
 
 const defaultRpcUrl = 'https://api.devnet.solana.com'
@@ -60,7 +61,7 @@ async function loadSecretKey(raw: string): Promise<Uint8Array> {
 function parseSecretKey(raw: string): Uint8Array {
   const normalized = raw.trim()
   if (normalized.startsWith('base64:')) {
-    return Uint8Array.from(Buffer.from(normalized.slice(7), 'base64'))
+    return decodeBase64(normalized.slice(7))
   }
   if (normalized.startsWith('[') && normalized.endsWith(']')) {
     return Uint8Array.from(JSON.parse(normalized) as number[])

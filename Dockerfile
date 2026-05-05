@@ -16,6 +16,7 @@ ENV NODE_ENV=production
 RUN npm install -g bun@1.3.12
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/src/server ./src/server
+COPY --from=build /app/src/shared ./src/shared
 COPY --from=build /app/node_modules ./node_modules
 EXPOSE 3000
 CMD ["node", "--import", "tsx", "src/server/index.ts"]

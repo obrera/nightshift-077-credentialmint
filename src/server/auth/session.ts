@@ -1,8 +1,9 @@
 import { getBase58Encoder } from '@solana/codecs-strings'
 import { createSignInMessage } from '@solana/wallet-standard-util'
 import { verifyMessageSignature } from '@solana/wallet-standard-util'
-import { createHash, randomBytes } from 'node:crypto'
+import { getRandomValues, randomUUID } from 'node:crypto'
 
+import { areBytesEqual, decodeBase64 } from '../../shared/byte-encoding'
 import { getPublicBaseUrl } from '../env'
 import { consumeNonce, getSession, saveNonce, saveSession } from '../storage/database'
 
@@ -18,7 +19,7 @@ export interface AuthSession {
 export function createNonce(walletAddress?: string) {
   const now = new Date()
   const expiresAt = new Date(now.getTime() + nonceMinutes * 60 * 1000)
-  const nonce = randomBytes(16).toString('base64url')
+  const nonce = randomUUID()
   const publicBaseUrl = getPublicBaseUrl()
   saveNonce({ expiresAt: expiresAt.toISOString(), issuedAt: now.toISOString(), nonce, walletAddress })
   return {
@@ -63,25 +64,23 @@ export async function verifySignInPayload(
   }
 
   const expectedMessage = createSignInMessage(input)
-  const signedMessage = output.signedMessage
-    ? Buffer.from(output.signedMessage, 'base64')
-    : Buffer.from(expectedMessage)
-  const signature = Buffer.from(output.signature, 'base64')
+  const signedMessage = output.signedMessage ? decodeBase64(output.signedMessage) : expectedMessage
+  const signature = decodeBase64(output.signature)
   const verified = verifyMessageSignature({
     message: expectedMessage,
     publicKey: Uint8Array.from(getBase58Encoder().encode(input.address)),
     signature,
     signedMessage,
   })
-  if (!verified || Buffer.compare(Buffer.from(expectedMessage), signedMessage) !== 0) {
+  if (!verified || !areBytesEqual(expectedMessage, signedMessage)) {
     throw new Error('Wallet signature verification failed.')
   }
 
   const now = new Date()
   const expiresAt = new Date(now.getTime() + sessionHours * 60 * 60 * 1000)
-  const token = createHash('sha256')
-    .update(`${input.address}:${randomBytes(32).toString('hex')}`)
-    .digest('base64url')
+  const tokenEntropy = new Uint8Array(32)
+  getRandomValues(tokenEntropy)
+  const token = `${input.address}.${randomUUID()}.${Array.from(tokenEntropy, (byte) => byte.toString(16).padStart(2, '0')).join('')}`
   saveSession({ createdAt: now.toISOString(), expiresAt: expiresAt.toISOString(), token, walletAddress: input.address })
   return { expiresAt: expiresAt.toISOString(), token, walletAddress: input.address }
 }
