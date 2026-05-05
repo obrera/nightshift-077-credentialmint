@@ -23,7 +23,8 @@ export function CredentialFeatureConnected({ account }: { account: UiWalletAccou
             <CardTitle className="text-4xl">CredentialMint</CardTitle>
             <CardDescription className="max-w-2xl text-base">
               Operators approve course and certification records. Learners claim a server-signed MPL Core credential NFT
-              into the same SIWS-authenticated wallet.
+              into the same SIWS-authenticated wallet. Visitors can request a devnet demo credential after signing in,
+              then claim and verify the minted proof.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
@@ -67,6 +68,12 @@ export function CredentialFeatureConnected({ account }: { account: UiWalletAccou
               <span>Mint path</span>
               <Badge variant={status?.minting.ready ? 'default' : 'destructive'}>
                 {status?.minting.status ?? 'checking'}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span>Visitor demo</span>
+              <Badge variant={session && !session.isOperator ? 'default' : 'secondary'}>
+                {session && !session.isOperator ? 'claimable after request' : 'sign in as learner'}
               </Badge>
             </div>
             {session ? (

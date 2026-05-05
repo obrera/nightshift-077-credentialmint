@@ -29,6 +29,12 @@ export async function createCredential(
   )
 }
 
+export async function createDemoCredential(token: string) {
+  return parseResponse<{ credential: CredentialRecord }>(
+    await fetch('/api/demo/credentials', { headers: authHeaders(token), method: 'POST' }),
+  )
+}
+
 export async function createNonce(walletAddress: string) {
   return parseResponse<{
     expiresAt: string

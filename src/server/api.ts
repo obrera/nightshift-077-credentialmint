@@ -7,6 +7,7 @@ import { createNonce, getAuthSession, verifySignInPayload } from './auth/session
 import {
   claimCredential,
   createCredentialRecord,
+  createDemoCredentialRecord,
   getCredentialOrThrow,
   getVisibleCredentials,
 } from './credentials/credential-service'
@@ -92,6 +93,15 @@ export function createApi() {
       )
     } catch (error) {
       return c.json(jsonError(error), 403)
+    }
+  })
+
+  app.post('/api/demo/credentials', async (c) => {
+    try {
+      const session = requireSession(c)
+      return c.json({ credential: createDemoCredentialRecord({ learnerWallet: session.walletAddress }) }, 201)
+    } catch (error) {
+      return c.json(jsonError(error), 400)
     }
   })
 

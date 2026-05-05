@@ -10,6 +10,7 @@ import type { CredentialSession } from './credential-types'
 import {
   claimCredential,
   createCredential,
+  createDemoCredential,
   createNonce,
   fetchBootstrap,
   fetchCredentials,
@@ -20,7 +21,9 @@ import {
 interface CredentialMintContextValue {
   claimCredential: (credentialId: string) => Promise<void>
   createCredential: (payload: Parameters<typeof createCredential>[1]) => Promise<void>
+  createDemoCredential: () => Promise<void>
   credentials: Awaited<ReturnType<typeof fetchCredentials>>['credentials']
+  isCreatingDemoCredential: boolean
   isLoadingCredentials: boolean
   session?: CredentialSession
   signIn: () => Promise<void>
@@ -83,6 +86,18 @@ export function CredentialMintProvider({
     },
   })
 
+  const { isPending: isCreatingDemoCredential, mutateAsync: createDemoCredentialAsync } = useMutation({
+    mutationFn: () => createDemoCredential(token),
+    onError: (error) =>
+      toast.error('Demo credential failed', {
+        description: error instanceof Error ? error.message : String(error),
+      }),
+    onSuccess: async () => {
+      toast.success('Demo credential approved')
+      await queryClient.invalidateQueries({ queryKey: ['credentialmint', 'credentials'] })
+    },
+  })
+
   const { mutateAsync: claimCredentialAsync } = useMutation({
     mutationFn: (credentialId: string) => claimCredential(token, credentialId),
     onError: (error) =>
@@ -97,7 +112,9 @@ export function CredentialMintProvider({
     () => ({
       claimCredential: async (credentialId) => void (await claimCredentialAsync(credentialId)),
       createCredential: async (payload) => void (await createCredentialAsync(payload)),
+      createDemoCredential: async () => void (await createDemoCredentialAsync()),
       credentials: credentialsQuery.data?.credentials ?? [],
+      isCreatingDemoCredential,
       isLoadingCredentials: credentialsQuery.isLoading,
       session,
       signIn: async () => void (await signInAsync()),
@@ -111,8 +128,10 @@ export function CredentialMintProvider({
     [
       claimCredentialAsync,
       createCredentialAsync,
+      createDemoCredentialAsync,
       credentialsQuery.data?.credentials,
       credentialsQuery.isLoading,
+      isCreatingDemoCredential,
       queryClient,
       session,
       signInAsync,

@@ -11,7 +11,8 @@ process.env.CREDENTIALMINT_OPERATOR_WALLETS = '11111111111111111111111111111111'
 
 const { isOperatorWallet } = await import('../src/server/auth/operator')
 const { createNonce, verifySignInPayload } = await import('../src/server/auth/session')
-const { createCredentialRecord, getCredentialOrThrow } = await import('../src/server/credentials/credential-service')
+const { createCredentialRecord, createDemoCredentialRecord, getCredentialOrThrow } =
+  await import('../src/server/credentials/credential-service')
 
 mkdirSync(process.env.CREDENTIALMINT_DATA_DIR, { recursive: true })
 
@@ -55,9 +56,23 @@ async function main() {
     throw new Error('Credential approval persistence failed.')
   }
 
+  const demoCredential = createDemoCredentialRecord({ learnerWallet })
+  if (demoCredential.status !== 'approved' || demoCredential.learnerWallet !== learnerWallet) {
+    throw new Error('Demo credential path did not create an approved learner credential.')
+  }
+  const repeatedDemoCredential = createDemoCredentialRecord({ learnerWallet })
+  if (repeatedDemoCredential.id !== demoCredential.id) {
+    throw new Error('Demo credential path should reuse the visitor demo record for the learner wallet.')
+  }
+
   console.log(
     JSON.stringify(
-      { credentialId: credential.id, siwsMessageBytes: message.byteLength, status: stored.status },
+      {
+        credentialId: credential.id,
+        demoCredentialId: demoCredential.id,
+        siwsMessageBytes: message.byteLength,
+        status: stored.status,
+      },
       null,
       2,
     ),

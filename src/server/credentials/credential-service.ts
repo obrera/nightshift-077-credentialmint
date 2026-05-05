@@ -7,6 +7,9 @@ import { getPublicBaseUrl } from '../env'
 import { mintCredential } from '../minting/mint-credential'
 import { createCredential, getCredential, listCredentials, saveCredential } from '../storage/database'
 
+const DEMO_CREDENTIAL_COURSE = 'CredentialMint Visitor Proof'
+const DEMO_CREDENTIAL_ISSUER = 'CredentialMint Demo Registrar'
+
 export async function claimCredential(args: { credentialId: string; walletAddress: string }) {
   const credential = getCredential(args.credentialId)
   if (!credential) {
@@ -55,6 +58,41 @@ export function createCredentialRecord(
     approvedAt: now,
     createdAt: now,
     id: crypto.randomUUID(),
+    status: 'approved',
+    updatedAt: now,
+  })
+}
+
+export function createDemoCredentialRecord(args: { learnerWallet: string }) {
+  try {
+    assertIsAddress(args.learnerWallet)
+  } catch {
+    throw new Error('Learner wallet must be a valid Solana address.')
+  }
+
+  const existing = listCredentials(args.learnerWallet).find(
+    (credential) =>
+      credential.courseTitle === DEMO_CREDENTIAL_COURSE && credential.issuerName === DEMO_CREDENTIAL_ISSUER,
+  )
+  if (existing) {
+    return existing
+  }
+
+  const now = new Date().toISOString()
+  return createCredential({
+    approvedAt: now,
+    completionDate: now.slice(0, 10),
+    courseTitle: DEMO_CREDENTIAL_COURSE,
+    createdAt: now,
+    credentialType: 'Devnet Visitor Credential',
+    evidenceUrl: `${getPublicBaseUrl().replace(/\/$/, '')}/api/metadata/collection.json`,
+    grade: 'demo',
+    id: crypto.randomUUID(),
+    issuerName: DEMO_CREDENTIAL_ISSUER,
+    learnerName: 'Connected Wallet Visitor',
+    learnerWallet: args.learnerWallet,
+    operatorNotes: 'Self-service devnet demo record so visitors can exercise the MPL Core claim path.',
+    operatorWallet: 'devnet-demo-issuer',
     status: 'approved',
     updatedAt: now,
   })

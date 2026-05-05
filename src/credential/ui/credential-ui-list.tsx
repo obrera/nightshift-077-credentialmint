@@ -16,18 +16,38 @@ export function CredentialUiList({
   isLoading: boolean
   session?: CredentialSession
 }) {
-  const { claimCredential, signIn } = useCredentialMint()
+  const { claimCredential, createDemoCredential, isCreatingDemoCredential, signIn } = useCredentialMint()
+  const showVisitorDemo = session && !session.isOperator && credentials.length === 0
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>{session?.isOperator ? 'All credential records' : 'My credentials'}</CardTitle>
-        <CardDescription>Approved credentials become claimable NFTs for the listed learner wallet.</CardDescription>
+        <CardDescription>
+          Approved credentials become claimable NFTs for the listed learner wallet. New visitors can create one devnet
+          demo credential for the connected wallet.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {!session ? <Button onClick={signIn}>Sign in to view credentials</Button> : null}
         {isLoading ? <p className="text-sm text-muted-foreground">Loading credentials…</p> : null}
-        {session && credentials.length === 0 ? (
+        {showVisitorDemo ? (
+          <div className="rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-950 dark:bg-sky-950/30">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <h3 className="font-semibold">Try the credential NFT flow</h3>
+                <p className="text-sm text-muted-foreground">
+                  Request a demo academic credential for this wallet, then claim it as a devnet MPL Core NFT from this
+                  list.
+                </p>
+              </div>
+              <Button disabled={isCreatingDemoCredential} onClick={createDemoCredential}>
+                {isCreatingDemoCredential ? 'Creating…' : 'Create demo credential'}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+        {session && credentials.length === 0 && !showVisitorDemo ? (
           <p className="text-sm text-muted-foreground">No credentials yet.</p>
         ) : null}
         {credentials.map((credential) => {
