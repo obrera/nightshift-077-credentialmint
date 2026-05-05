@@ -5,10 +5,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build --configLoader runner",
     "check-types": "tsc -b --noEmit",
     "ci": "bun run --sequential build check-types lint",
-    "dev": "vite",
+    "dev": "vite --configLoader runner",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "lefthook install",

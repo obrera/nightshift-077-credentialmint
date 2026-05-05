@@ -12,7 +12,7 @@ import tseslint from 'typescript-eslint'
 import pluginQuery from '@tanstack/eslint-plugin-query'
 
 export default defineConfig([
-  globalIgnores(['dist', 'tmp']),
+  globalIgnores(['dist', 'tmp', 'node_modules', '.tsbuildinfo']),
   {
     extends: [
       js.configs.recommended,
