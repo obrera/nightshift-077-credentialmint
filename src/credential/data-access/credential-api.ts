@@ -1,8 +1,26 @@
 import type { BootstrapStatus, CredentialRecord, CredentialSession } from './credential-types'
 
-export async function claimCredential(token: string, credentialId: string) {
+export interface CredentialClaimInput {
+  credentialId: string
+  message: string
+  nonce: string
+  walletAddress: string
+}
+
+export async function claimCredential(
+  token: string,
+  credentialId: string,
+  payload: {
+    input: CredentialClaimInput
+    output: { signature: string; signedMessage?: string }
+  },
+) {
   return parseResponse<{ credential: CredentialRecord }>(
-    await fetch(`/api/credentials/${credentialId}/claim`, { headers: authHeaders(token), method: 'POST' }),
+    await fetch(`/api/credentials/${credentialId}/claim`, {
+      body: JSON.stringify(payload),
+      headers: { ...authHeaders(token), 'content-type': 'application/json' },
+      method: 'POST',
+    }),
   )
 }
 
@@ -26,6 +44,12 @@ export async function createCredential(
       headers: { ...authHeaders(token), 'content-type': 'application/json' },
       method: 'POST',
     }),
+  )
+}
+
+export async function createCredentialClaimChallenge(token: string, credentialId: string) {
+  return parseResponse<{ expiresAt: string; input: CredentialClaimInput }>(
+    await fetch(`/api/credentials/${credentialId}/claim-challenge`, { headers: authHeaders(token), method: 'POST' }),
   )
 }
 

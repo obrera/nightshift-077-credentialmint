@@ -16,6 +16,41 @@ export interface AuthSession {
   walletAddress: string
 }
 
+export interface CredentialClaimInput {
+  credentialId: string
+  message: string
+  nonce: string
+  walletAddress: string
+}
+
+export function createCredentialClaimInput(args: { courseTitle: string; credentialId: string; walletAddress: string }) {
+  const now = new Date()
+  const expiresAt = new Date(now.getTime() + nonceMinutes * 60 * 1000)
+  const nonce = `claim:${randomUUID()}`
+  saveNonce({
+    expiresAt: expiresAt.toISOString(),
+    issuedAt: now.toISOString(),
+    nonce,
+    walletAddress: args.walletAddress,
+  })
+  const message = formatCredentialClaimMessage({
+    courseTitle: args.courseTitle,
+    credentialId: args.credentialId,
+    issuedAt: now.toISOString(),
+    nonce,
+    walletAddress: args.walletAddress,
+  })
+  return {
+    expiresAt: expiresAt.toISOString(),
+    input: {
+      credentialId: args.credentialId,
+      message,
+      nonce,
+      walletAddress: args.walletAddress,
+    },
+  }
+}
+
 export function createNonce(walletAddress?: string) {
   const now = new Date()
   const expiresAt = new Date(now.getTime() + nonceMinutes * 60 * 1000)
@@ -46,6 +81,56 @@ export function getAuthSession(authHeader?: null | string): AuthSession | undefi
     return undefined
   }
   return { expiresAt: session.expiresAt, token: session.token, walletAddress: session.walletAddress }
+}
+
+export function verifyCredentialClaimPayload(
+  args: { courseTitle: string; credentialId: string; input: CredentialClaimInput; walletAddress: string },
+  output: { signature: string; signedMessage?: string },
+) {
+  if (args.input.credentialId !== args.credentialId) {
+    throw new Error('Claim credential does not match request.')
+  }
+  if (args.input.walletAddress !== args.walletAddress) {
+    throw new Error('Claim wallet does not match authenticated wallet.')
+  }
+  if (!args.input.nonce.startsWith('claim:')) {
+    throw new Error('Claim nonce is not valid for credential claims.')
+  }
+  const nonceRecord = consumeNonce(args.input.nonce)
+  if (!nonceRecord) {
+    throw new Error('Claim nonce was not found or has already been used.')
+  }
+  if (new Date(nonceRecord.expiresAt).getTime() < Date.now()) {
+    throw new Error('Claim nonce has expired.')
+  }
+  if (nonceRecord.walletAddress !== args.walletAddress) {
+    throw new Error('Claim nonce wallet does not match authenticated wallet.')
+  }
+
+  const expectedMessage = new TextEncoder().encode(
+    formatCredentialClaimMessage({
+      courseTitle: args.courseTitle,
+      credentialId: args.credentialId,
+      issuedAt: nonceRecord.issuedAt,
+      nonce: args.input.nonce,
+      walletAddress: args.walletAddress,
+    }),
+  )
+  const signedMessage = output.signedMessage ? decodeBase64(output.signedMessage) : expectedMessage
+  const signature = decodeBase64(output.signature)
+  const verified = verifyMessageSignature({
+    message: expectedMessage,
+    publicKey: Uint8Array.from(getBase58Encoder().encode(args.walletAddress)),
+    signature,
+    signedMessage,
+  })
+  if (
+    !verified ||
+    !areBytesEqual(expectedMessage, signedMessage) ||
+    !areBytesEqual(expectedMessage, new TextEncoder().encode(args.input.message))
+  ) {
+    throw new Error('Credential claim signature verification failed.')
+  }
 }
 
 export async function verifySignInPayload(
@@ -83,4 +168,25 @@ export async function verifySignInPayload(
   const token = `${input.address}.${randomUUID()}.${Array.from(tokenEntropy, (byte) => byte.toString(16).padStart(2, '0')).join('')}`
   saveSession({ createdAt: now.toISOString(), expiresAt: expiresAt.toISOString(), token, walletAddress: input.address })
   return { expiresAt: expiresAt.toISOString(), token, walletAddress: input.address }
+}
+
+function formatCredentialClaimMessage(args: {
+  courseTitle: string
+  credentialId: string
+  issuedAt: string
+  nonce: string
+  walletAddress: string
+}) {
+  const publicBaseUrl = getPublicBaseUrl()
+  return [
+    'CredentialMint credential NFT claim',
+    `Domain: ${new URL(publicBaseUrl).host}`,
+    `URI: ${publicBaseUrl}`,
+    `Wallet: ${args.walletAddress}`,
+    `Credential ID: ${args.credentialId}`,
+    `Course: ${args.courseTitle}`,
+    `Nonce: ${args.nonce}`,
+    `Issued At: ${args.issuedAt}`,
+    'Statement: I am signing to receive this MPL Core academic credential NFT into my connected wallet.',
+  ].join('\n')
 }

@@ -24,7 +24,7 @@ export function CredentialFeatureConnected({ account }: { account: UiWalletAccou
             <CardDescription className="max-w-2xl text-base">
               Operators approve course and certification records. Learners claim a server-signed MPL Core credential NFT
               into the same SIWS-authenticated wallet. Visitors can request a devnet demo credential after signing in,
-              then claim and verify the minted proof.
+              then sign to receive and verify the minted proof.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">

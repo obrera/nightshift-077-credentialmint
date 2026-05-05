@@ -37,8 +37,8 @@ export function CredentialUiList({
               <div className="space-y-1">
                 <h3 className="font-semibold">Try the credential NFT flow</h3>
                 <p className="text-sm text-muted-foreground">
-                  Request a demo academic credential for this wallet, then claim it as a devnet MPL Core NFT from this
-                  list.
+                  Request a demo academic credential for this wallet, then sign the claim message to receive it as a
+                  devnet MPL Core NFT.
                 </p>
               </div>
               <Button disabled={isCreatingDemoCredential} onClick={createDemoCredential}>
@@ -68,7 +68,9 @@ export function CredentialUiList({
                     Learner <SolanaUiAddress address={credential.learnerWallet} len={8} />
                   </p>
                 </div>
-                {canClaim ? <Button onClick={() => claimCredential(credential.id)}>Claim credential NFT</Button> : null}
+                {canClaim ? (
+                  <Button onClick={() => claimCredential(credential.id)}>Sign and claim credential NFT</Button>
+                ) : null}
               </div>
               {credential.assetAddress ? (
                 <div className="mt-3 flex flex-wrap gap-3 text-sm">

@@ -6,6 +6,7 @@ import { getOperatorWallets, isOperatorWallet } from './auth/operator'
 import { createNonce, getAuthSession, verifySignInPayload } from './auth/session'
 import {
   claimCredential,
+  createCredentialClaimChallenge,
   createCredentialRecord,
   createDemoCredentialRecord,
   getCredentialOrThrow,
@@ -25,6 +26,19 @@ const credentialSchema = z.object({
   learnerName: z.string().min(2),
   learnerWallet: z.string().min(32),
   operatorNotes: z.string().optional(),
+})
+
+const claimSchema = z.object({
+  input: z.object({
+    credentialId: z.string().min(1),
+    message: z.string().min(1),
+    nonce: z.string().min(1),
+    walletAddress: z.string().min(32),
+  }),
+  output: z.object({
+    signature: z.string().min(1),
+    signedMessage: z.string().optional(),
+  }),
 })
 
 export function createApi() {
@@ -105,11 +119,28 @@ export function createApi() {
     }
   })
 
+  app.post('/api/credentials/:id/claim-challenge', async (c) => {
+    try {
+      const session = requireSession(c)
+      return c.json(
+        createCredentialClaimChallenge({ credentialId: c.req.param('id'), walletAddress: session.walletAddress }),
+      )
+    } catch (error) {
+      return c.json(jsonError(error), 400)
+    }
+  })
+
   app.post('/api/credentials/:id/claim', async (c) => {
     try {
       const session = requireSession(c)
+      const payload = claimSchema.parse(await c.req.json())
       return c.json({
-        credential: await claimCredential({ credentialId: c.req.param('id'), walletAddress: session.walletAddress }),
+        credential: await claimCredential({
+          credentialId: c.req.param('id'),
+          input: payload.input,
+          output: payload.output,
+          walletAddress: session.walletAddress,
+        }),
       })
     } catch (error) {
       return c.json(jsonError(error), 400)

@@ -1,5 +1,7 @@
+import type { Address } from '@solana/kit'
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { type UiWallet, type UiWalletAccount, useSignIn } from '@wallet-ui/react'
+import { type UiWallet, type UiWalletAccount, useSignIn, useWalletAccountMessageSigner } from '@wallet-ui/react'
 import { createContext, type ReactNode, useContext, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -10,6 +12,7 @@ import type { CredentialSession } from './credential-types'
 import {
   claimCredential,
   createCredential,
+  createCredentialClaimChallenge,
   createDemoCredential,
   createNonce,
   fetchBootstrap,
@@ -44,6 +47,7 @@ export function CredentialMintProvider({
 }) {
   const [token, setToken] = useState(() => localStorage.getItem('credentialmint.token') ?? '')
   const queryClient = useQueryClient()
+  const messageSigner = useWalletAccountMessageSigner(account)
   const signInWithWallet = useSignIn(wallet)
   const statusQuery = useQuery({ queryFn: fetchBootstrap, queryKey: ['credentialmint', 'bootstrap'] })
   const sessionQuery = useQuery({
@@ -99,7 +103,23 @@ export function CredentialMintProvider({
   })
 
   const { mutateAsync: claimCredentialAsync } = useMutation({
-    mutationFn: (credentialId: string) => claimCredential(token, credentialId),
+    mutationFn: async (credentialId: string) => {
+      const challenge = await createCredentialClaimChallenge(token, credentialId)
+      const [signedMessage] = await messageSigner.modifyAndSignMessages([
+        {
+          content: new TextEncoder().encode(challenge.input.message),
+          signatures: {},
+        },
+      ])
+      const signature = signedMessage?.signatures[account.address as Address]
+      if (!signature) {
+        throw new Error('Claim signed but no signature was returned for the connected wallet.')
+      }
+      return claimCredential(token, credentialId, {
+        input: challenge.input,
+        output: { signature: encodeBase64(Uint8Array.from(signature)) },
+      })
+    },
     onError: (error) =>
       toast.error('Claim failed', { description: error instanceof Error ? error.message : String(error) }),
     onSuccess: async () => {

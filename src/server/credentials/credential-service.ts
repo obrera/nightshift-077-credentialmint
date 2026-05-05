@@ -1,8 +1,10 @@
 import { assertIsAddress } from '@solana/kit'
 
+import type { CredentialClaimInput } from '../auth/session'
 import type { CredentialRecord } from '../storage/types'
 
 import { isOperatorWallet } from '../auth/operator'
+import { createCredentialClaimInput, verifyCredentialClaimPayload } from '../auth/session'
 import { getPublicBaseUrl } from '../env'
 import { mintCredential } from '../minting/mint-credential'
 import { createCredential, getCredential, listCredentials, saveCredential } from '../storage/database'
@@ -10,7 +12,12 @@ import { createCredential, getCredential, listCredentials, saveCredential } from
 const DEMO_CREDENTIAL_COURSE = 'CredentialMint Visitor Proof'
 const DEMO_CREDENTIAL_ISSUER = 'CredentialMint Demo Registrar'
 
-export async function claimCredential(args: { credentialId: string; walletAddress: string }) {
+export async function claimCredential(args: {
+  credentialId: string
+  input: CredentialClaimInput
+  output: { signature: string; signedMessage?: string }
+  walletAddress: string
+}) {
   const credential = getCredential(args.credentialId)
   if (!credential) {
     throw new Error('Credential record not found.')
@@ -21,6 +28,15 @@ export async function claimCredential(args: { credentialId: string; walletAddres
   if (credential.status !== 'approved') {
     throw new Error('Credential must be approved and unclaimed before minting.')
   }
+  verifyCredentialClaimPayload(
+    {
+      courseTitle: credential.courseTitle,
+      credentialId: credential.id,
+      input: args.input,
+      walletAddress: args.walletAddress,
+    },
+    args.output,
+  )
   const baseUrl = getPublicBaseUrl().replace(/\/$/, '')
   const metadataUrl = `${baseUrl}/api/metadata/${credential.id}.json`
   const imageUrl = `${baseUrl}/api/metadata/${credential.id}.svg`
@@ -39,6 +55,24 @@ export async function claimCredential(args: { credentialId: string; walletAddres
   credential.txSignature = minted.signature
   credential.updatedAt = new Date().toISOString()
   return saveCredential(credential)
+}
+
+export function createCredentialClaimChallenge(args: { credentialId: string; walletAddress: string }) {
+  const credential = getCredential(args.credentialId)
+  if (!credential) {
+    throw new Error('Credential record not found.')
+  }
+  if (credential.learnerWallet !== args.walletAddress) {
+    throw new Error('Only the approved learner wallet can receive this credential NFT.')
+  }
+  if (credential.status !== 'approved') {
+    throw new Error('Credential must be approved and unclaimed before receiving.')
+  }
+  return createCredentialClaimInput({
+    courseTitle: credential.courseTitle,
+    credentialId: credential.id,
+    walletAddress: args.walletAddress,
+  })
 }
 
 export function createCredentialRecord(

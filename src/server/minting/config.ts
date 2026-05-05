@@ -51,7 +51,7 @@ export async function getMintingConfig(): Promise<CredentialMintingConfig> {
   }
 }
 
-async function loadSecretKey(raw: string): Promise<Uint8Array> {
+export async function loadSecretKey(raw: string): Promise<Uint8Array> {
   if (raw.startsWith('/') || raw.startsWith('./') || raw.startsWith('../') || raw.endsWith('.json')) {
     return parseSecretKey(await fs.readFile(raw, 'utf8'))
   }
